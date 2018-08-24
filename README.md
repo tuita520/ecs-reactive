@@ -56,6 +56,7 @@ sealed class TestReactiveSystemOnAdd : EcsReactiveSystem<ReactiveComponent1>, IE
         return EcsReactiveType.OnAdded;
     }
 
+    // this method will be called only if there are any entities for processing.
     protected override void RunReactive () {
         // ReactedEntitiesCount contains amount of reacted entities at ReactedEntities collection.
         for (var i = 0; i < ReactedEntitiesCount; i++) {
@@ -76,6 +77,7 @@ sealed class TestReactiveSystemOnRemove : EcsReactiveSystem<ReactiveComponent1> 
         return EcsReactiveType.OnRemoved;
     }
 
+    // this method will be called only if there are any entities for processing.
     protected override void RunReactive () {
         for (var i = 0; i < ReactedEntitiesCount; i++) {
             Debug.LogFormat ("[ON-REMOVE] Reacted entity: {0}", ReactedEntities[i]);

@@ -58,10 +58,20 @@ namespace Leopotam.Ecs.Reactive {
             }
         }
 
+        /// <summary>
+        /// Returns EcsFilterReactive instance for watching on it.
+        /// </summary>
         protected abstract IEcsFilterReactive GetFilter ();
 
+        /// <summary>
+        /// Returns reactive type behaviour.
+        /// </summary>
         protected abstract EcsReactiveType GetReactiveType ();
 
+        /// <summary>
+        /// Processes reacted entities.
+        /// Will be called only if any entities presents for processing.
+        /// </summary>
         protected abstract void RunReactive ();
     }
 
