@@ -76,16 +76,35 @@ namespace Leopotam.Ecs.Reactive {
     }
 
     /// <summary>
-    /// Reactive system with support of generic component type.
+    /// Reactive system with support for one component type.
     /// </summary>
-    /// <typeparam name="T">Component type.</typeparam>
-    public abstract class EcsReactiveSystem<T> : EcsReactiveSystemBase where T : class, new () {
-        protected EcsFilterReactive<T> _reactiveFilter = null;
+    /// <typeparam name="Inc1">Component type.</typeparam>
+    public abstract class EcsReactiveSystem<Inc1> : EcsReactiveSystemBase where Inc1 : class, new () {
+        protected EcsFilterReactive<Inc1> _reactiveFilter = null;
 
         public EcsReactiveSystem () { }
 
         public EcsReactiveSystem (EcsWorld world) {
-            _reactiveFilter = world.GetFilter<EcsFilterReactive<T>> ();
+            _reactiveFilter = world.GetFilter<EcsFilterReactive<Inc1>> ();
+        }
+
+        protected override IEcsFilterReactive GetFilter () {
+            return _reactiveFilter;
+        }
+    }
+
+    /// <summary>
+    /// Reactive system with support for two component types.
+    /// </summary>
+    /// <typeparam name="Inc1">First component type.</typeparam>
+    /// <typeparam name="Inc2">Second component type.</typeparam>
+    public abstract class EcsReactiveSystem<Inc1, Inc2> : EcsReactiveSystemBase where Inc1 : class, new () where Inc2 : class, new () {
+        protected EcsFilterReactive<Inc1, Inc2> _reactiveFilter = null;
+
+        public EcsReactiveSystem () { }
+
+        public EcsReactiveSystem (EcsWorld world) {
+            _reactiveFilter = world.GetFilter<EcsFilterReactive<Inc1, Inc2>> ();
         }
 
         protected override IEcsFilterReactive GetFilter () {

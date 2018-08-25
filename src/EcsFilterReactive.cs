@@ -24,16 +24,13 @@ namespace Leopotam.Ecs.Reactive {
     }
 
     /// <summary>
-    /// Default implementation of reactive filter for one component.
+    /// Reactive filter base class.
     /// </summary>
-    /// <typeparam name="Inc1">Component type</typeparam>
-    public class EcsFilterReactive<Inc1> : EcsFilter, IEcsFilterReactive where Inc1 : class, new () {
+    public abstract class EcsFilterReactiveBase : EcsFilter, IEcsFilterReactive {
         IEcsFilterReactiveListener[] _listeners = new IEcsFilterReactiveListener[4];
         int _listenersCount;
 
-        protected EcsFilterReactive () {
-            IncludeMask.SetBit (EcsComponentPool<Inc1>.Instance.GetComponentTypeIndex (), true);
-        }
+        protected EcsFilterReactiveBase () { }
 #if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
@@ -84,6 +81,45 @@ namespace Leopotam.Ecs.Reactive {
                     break;
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Reactive filter for 1 component.
+    /// </summary>
+    /// <typeparam name="Inc1">Component type.</typeparam>
+    public class EcsFilterReactive<Inc1> : EcsFilterReactiveBase where Inc1 : class, new () {
+        protected EcsFilterReactive () {
+            IncludeMask.SetBit (EcsComponentPool<Inc1>.Instance.GetComponentTypeIndex (), true);
+            ValidateMasks (1, 0);
+        }
+    }
+
+    /// <summary>
+    /// Reactive filter for 2 components.
+    /// </summary>
+    /// <typeparam name="Inc1">First component type.</typeparam>
+    /// <typeparam name="Inc2">Second component type.</typeparam>
+    public class EcsFilterReactive<Inc1, Inc2> : EcsFilterReactiveBase where Inc1 : class, new () where Inc2 : class, new () {
+        protected EcsFilterReactive () {
+            IncludeMask.SetBit (EcsComponentPool<Inc1>.Instance.GetComponentTypeIndex (), true);
+            IncludeMask.SetBit (EcsComponentPool<Inc2>.Instance.GetComponentTypeIndex (), true);
+            ValidateMasks (2, 0);
+        }
+    }
+
+    /// <summary>
+    /// Reactive filter for 3 components.
+    /// </summary>
+    /// <typeparam name="Inc1">First component type.</typeparam>
+    /// <typeparam name="Inc2">Second component type.</typeparam>
+    /// <typeparam name="Inc3">Third component type.</typeparam>
+    public class EcsFilterReactive<Inc1, Inc2, Inc3> : EcsFilterReactiveBase where Inc1 : class, new () where Inc2 : class, new () where Inc3 : class, new () {
+        protected EcsFilterReactive () {
+            IncludeMask.SetBit (EcsComponentPool<Inc1>.Instance.GetComponentTypeIndex (), true);
+            IncludeMask.SetBit (EcsComponentPool<Inc2>.Instance.GetComponentTypeIndex (), true);
+            IncludeMask.SetBit (EcsComponentPool<Inc3>.Instance.GetComponentTypeIndex (), true);
+            ValidateMasks (3, 0);
         }
     }
 }
