@@ -88,7 +88,7 @@ namespace Leopotam.Ecs.Reactive {
             _reactiveFilter = world.GetFilter<EcsFilterReactive<Inc1>> ();
         }
 
-        protected override IEcsFilterReactive GetFilter () {
+        sealed protected override IEcsFilterReactive GetFilter () {
             return _reactiveFilter;
         }
     }
@@ -107,8 +107,58 @@ namespace Leopotam.Ecs.Reactive {
             _reactiveFilter = world.GetFilter<EcsFilterReactive<Inc1, Inc2>> ();
         }
 
-        protected override IEcsFilterReactive GetFilter () {
+        sealed protected override IEcsFilterReactive GetFilter () {
             return _reactiveFilter;
         }
+    }
+
+    /// <summary>
+    /// For internal use only! Special component for mark user components as updated.
+    /// </summary>
+    /// <typeparam name="T">User component type.</typeparam>
+    public class EcsUpdateReactiveFlag<T> where T : class, new () { }
+
+    /// <summary>
+    /// Reactive system for processing updated components (EcsWorld.MarkComponentAsUpdated).
+    /// </summary>
+    /// <typeparam name="Inc1">Component type.</typeparam>
+    public abstract class EcsUpdateReactiveSystem<Inc1> : EcsReactiveSystemBase where Inc1 : class, new () {
+        /// <summary>
+        /// EcsWorld instance.
+        /// </summary>
+        protected EcsWorld _world = null;
+
+        /// <summary>
+        /// Internal filter for custom reaction on entities.
+        /// </summary>
+        protected EcsFilterReactive<EcsUpdateReactiveFlag<Inc1>> _reactiveFilter = null;
+
+        public EcsUpdateReactiveSystem () { }
+
+        public EcsUpdateReactiveSystem (EcsWorld world) {
+            _world = world;
+            _reactiveFilter = _world.GetFilter<EcsFilterReactive<EcsUpdateReactiveFlag<Inc1>>> ();
+        }
+
+        sealed protected override IEcsFilterReactive GetFilter () {
+            return _reactiveFilter;
+        }
+
+        sealed protected override EcsReactiveType GetReactiveType () {
+            return EcsReactiveType.OnAdded;
+        }
+
+        sealed protected override void RunReactive () {
+            for (var i = 0; i < _reactiveFilter.EntitiesCount; i++) {
+                _world.RemoveComponent<EcsUpdateReactiveFlag<Inc1>> (_reactiveFilter.Entities[i]);
+            }
+            RunUpdateReactive ();
+        }
+
+        /// <summary>
+        /// Processes MarkComponentAsUpdated reacted entities.
+        /// Will be called only if any entities presents for processing.
+        /// </summary>
+        protected abstract void RunUpdateReactive ();
     }
 }

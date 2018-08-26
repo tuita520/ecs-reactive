@@ -7,7 +7,7 @@ Reactive filters / systems for using with [Entity Component System Framework](ht
 
 > **Its early work-in-progress stage, not recommended to use in real projects, any api / behaviour can change later.**
 
-## Example:
+## OnAdd / OnRemove example:
 ```csharp
 class ReactiveComponent1 {
     public int Id;
@@ -94,4 +94,77 @@ Result log:
 [ON-REMOVE] Reacted entity: 0
 [ON-REMOVE] Reacted entity: 1
 [ON-REMOVE] Reacted entity: 2
+```
+
+## MarkComponentAsUpdated example:
+```csharp
+class UpdateComponent1 {
+    public int Id;
+}
+
+sealed class TestUpdateReactiveStartup : MonoBehaviour {
+    EcsWorld _world;
+    EcsSystems _systems;
+
+    void OnEnable () {
+        _world = new EcsWorld ();
+        _systems = new EcsSystems (_world);
+        _systems
+            .Add (new TestRunSystem ())
+            .Add (new TestReactiveSystemOnUpdate ())
+            .Initialize ();
+    }
+
+    void Update () {
+        _systems.Run ();
+    }
+
+    void OnDisable () {
+        _systems.Dispose ();
+        _systems = null;
+        _world.Dispose ();
+        _world = null;
+    }
+}
+
+[EcsInject]
+sealed class TestRunSystem : IEcsInitSystem, IEcsRunSystem {
+    EcsWorld _world = null;
+    EcsFilter<UpdateComponent1> _filter = null;
+
+    void IEcsInitSystem.Initialize () {
+        _world.CreateEntityWith<UpdateComponent1> ().Id = 10;
+    }
+
+    void IEcsInitSystem.Destroy () { }
+
+    void IEcsRunSystem.Run () {
+        for (var i = 0; i < _filter.EntitiesCount; i++) {
+            _filter.Components1[i].Id++;
+            // Important! This method should be called for each component for processing at EcsUpdateReactiveSystem.
+            _world.MarkComponentAsUpdated<UpdateComponent1> (_filter.Entities[i]);
+        }
+    }
+}
+
+[EcsInject]
+sealed class TestReactiveSystemOnUpdate : EcsUpdateReactiveSystem<UpdateComponent1> {
+    // this method will be called only if there are any entities for processing.
+    protected override void RunUpdateReactive () {
+        for (var i = 0; i < ReactedEntitiesCount; i++) {
+            var entity = ReactedEntities[i];
+            var c = _world.GetComponent<UpdateComponent1> (entity);
+            Debug.LogFormat ("[ON-UPDATE] Updated entity: {0}, new value: {1}", entity, c.Id);
+        }
+    }
+}
+```
+
+Result log:
+```
+[ON-UPDATE] Updated entity: 0, new value: 11
+[ON-UPDATE] Updated entity: 0, new value: 12
+[ON-UPDATE] Updated entity: 0, new value: 13
+[ON-UPDATE] Updated entity: 0, new value: 14
+...
 ```
