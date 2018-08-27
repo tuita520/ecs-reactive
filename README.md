@@ -7,6 +7,8 @@ Reactive filters / systems for using with [Entity Component System Framework](ht
 
 > **Its early work-in-progress stage, not recommended to use in real projects, any api / behaviour can change later.**
 
+> **Important!** All reacted entities are just cached results: real entities / components already can be removed from world / component! If you know that you use similar behaviour (entity can be removed before reactive system starts to work) - `EcsWorld.IsEntityExists` method should be used at reactive system processing per each entity. But better to not remove entities before reactive systems.
+
 ## OnAdd / OnRemove example:
 ```csharp
 class ReactiveComponent1 {
