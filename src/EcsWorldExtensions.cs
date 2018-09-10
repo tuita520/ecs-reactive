@@ -11,7 +11,8 @@ namespace Leopotam.Ecs {
         /// </summary>
         /// <typeparam name="T">Component type.</typeparam>
         public static void MarkComponentAsUpdated<T> (this EcsWorld world, int entity) where T : class, new () {
-            world.EnsureComponent<Reactive.EcsUpdateReactiveFlag<T>> (entity);
+            bool isNew;
+            world.EnsureComponent<Reactive.EcsUpdateReactiveFlag<T>> (entity, out isNew);
         }
     }
 }
