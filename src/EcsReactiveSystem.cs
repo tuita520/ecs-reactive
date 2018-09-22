@@ -58,28 +58,107 @@ namespace Leopotam.Ecs.Reactive {
             }
         }
 
+        /// <summary>
+        /// Returns EcsFilterReactive instance for watching on it.
+        /// </summary>
         protected abstract IEcsFilterReactive GetFilter ();
 
+        /// <summary>
+        /// Returns reactive type behaviour.
+        /// </summary>
         protected abstract EcsReactiveType GetReactiveType ();
 
+        /// <summary>
+        /// Processes reacted entities.
+        /// Will be called only if any entities presents for processing.
+        /// </summary>
         protected abstract void RunReactive ();
     }
 
     /// <summary>
-    /// Reactive system with support of generic component type.
+    /// Reactive system with support for one component type.
     /// </summary>
-    /// <typeparam name="T">Component type.</typeparam>
-    public abstract class EcsReactiveSystem<T> : EcsReactiveSystemBase where T : class, new () {
-        protected EcsFilterReactive<T> _reactiveFilter = null;
+    /// <typeparam name="Inc1">Component type.</typeparam>
+    public abstract class EcsReactiveSystem<Inc1> : EcsReactiveSystemBase where Inc1 : class, new () {
+        protected EcsFilterReactive<Inc1> _reactiveFilter = null;
 
         public EcsReactiveSystem () { }
 
         public EcsReactiveSystem (EcsWorld world) {
-            _reactiveFilter = world.GetFilter<EcsFilterReactive<T>> ();
+            _reactiveFilter = world.GetFilter<EcsFilterReactive<Inc1>> ();
         }
 
-        protected override IEcsFilterReactive GetFilter () {
+        sealed protected override IEcsFilterReactive GetFilter () {
             return _reactiveFilter;
         }
+    }
+
+    /// <summary>
+    /// Reactive system with support for two component types.
+    /// </summary>
+    /// <typeparam name="Inc1">First component type.</typeparam>
+    /// <typeparam name="Inc2">Second component type.</typeparam>
+    public abstract class EcsReactiveSystem<Inc1, Inc2> : EcsReactiveSystemBase where Inc1 : class, new () where Inc2 : class, new () {
+        protected EcsFilterReactive<Inc1, Inc2> _reactiveFilter = null;
+
+        public EcsReactiveSystem () { }
+
+        public EcsReactiveSystem (EcsWorld world) {
+            _reactiveFilter = world.GetFilter<EcsFilterReactive<Inc1, Inc2>> ();
+        }
+
+        sealed protected override IEcsFilterReactive GetFilter () {
+            return _reactiveFilter;
+        }
+    }
+
+    /// <summary>
+    /// For internal use only! Special component for mark user components as updated.
+    /// </summary>
+    /// <typeparam name="T">User component type.</typeparam>
+    public class EcsUpdateReactiveFlag<T> where T : class, new () { }
+
+    /// <summary>
+    /// Reactive system for processing updated components (EcsWorld.MarkComponentAsUpdated).
+    /// </summary>
+    /// <typeparam name="Inc1">Component type.</typeparam>
+    public abstract class EcsUpdateReactiveSystem<Inc1> : EcsReactiveSystemBase where Inc1 : class, new () {
+        /// <summary>
+        /// EcsWorld instance.
+        /// </summary>
+        protected EcsWorld _world = null;
+
+        /// <summary>
+        /// Internal filter for custom reaction on entities.
+        /// </summary>
+        protected EcsFilterReactive<EcsUpdateReactiveFlag<Inc1>> _reactiveFilter = null;
+
+        public EcsUpdateReactiveSystem () { }
+
+        public EcsUpdateReactiveSystem (EcsWorld world) {
+            _world = world;
+            _reactiveFilter = _world.GetFilter<EcsFilterReactive<EcsUpdateReactiveFlag<Inc1>>> ();
+        }
+
+        sealed protected override IEcsFilterReactive GetFilter () {
+            return _reactiveFilter;
+        }
+
+        sealed protected override EcsReactiveType GetReactiveType () {
+            return EcsReactiveType.OnAdded;
+        }
+
+        sealed protected override void RunReactive () {
+            for (var i = 0; i < _reactiveFilter.EntitiesCount; i++) {
+                _world.RemoveComponent<EcsUpdateReactiveFlag<Inc1>> (_reactiveFilter.Entities[i]);
+            }
+            RunUpdateReactive ();
+        }
+
+        /// <summary>
+        /// Processes MarkComponentAsUpdated reacted entities.
+        /// Will be called only if any entities presents for processing.
+        /// </summary>
+        protected abstract void RunUpdateReactive ();
     }
 }
