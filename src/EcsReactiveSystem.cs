@@ -149,7 +149,7 @@ namespace Leopotam.Ecs.Reactive {
         }
 
         sealed protected override void RunReactive () {
-            for (var i = 0; i < _reactiveFilter.EntitiesCount; i++) {
+            foreach (var i in _reactiveFilter) {
                 _world.RemoveComponent<EcsUpdateReactiveFlag<Inc1>> (_reactiveFilter.Entities[i]);
             }
             RunUpdateReactive ();

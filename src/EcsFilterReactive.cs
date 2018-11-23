@@ -74,7 +74,7 @@ namespace Leopotam.Ecs.Reactive {
         }
 
         public void RemoveListener (IEcsFilterReactiveListener listener) {
-            for (var i = 0; i < EntitiesCount; i++) {
+            for (var i = 0; i < _listenersCount; i++) {
                 if (_listeners[i] == listener) {
                     _listenersCount--;
                     Array.Copy (_listeners, i + 1, _listeners, i, _listenersCount - i);
