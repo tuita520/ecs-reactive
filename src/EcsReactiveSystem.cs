@@ -18,7 +18,7 @@ namespace Leopotam.Ecs.Reactive {
     /// <summary>
     /// Base class for all reactive systems.
     /// </summary>
-    public abstract class EcsReactiveSystemBase : IEcsFilterReactiveListener, IEcsPreInitSystem, IEcsRunSystem {
+    public abstract class EcsReactiveSystemBase : IEcsFilterListener, IEcsPreInitSystem, IEcsRunSystem {
         public int[] ReactedEntities = new int[32];
         public int ReactedEntitiesCount;
         EcsReactiveType _reactType;
@@ -40,7 +40,7 @@ namespace Leopotam.Ecs.Reactive {
             ReactedEntitiesCount = 0;
         }
 
-        void IEcsFilterReactiveListener.OnEntityAdded (int entity) {
+        void IEcsFilterListener.OnEntityAdded (int entity) {
             if (_reactType == EcsReactiveType.OnAdded) {
                 if (ReactedEntities.Length == ReactedEntitiesCount) {
                     Array.Resize (ref ReactedEntities, ReactedEntitiesCount << 1);
@@ -49,7 +49,7 @@ namespace Leopotam.Ecs.Reactive {
             }
         }
 
-        void IEcsFilterReactiveListener.OnEntityRemoved (int entity) {
+        void IEcsFilterListener.OnEntityRemoved (int entity) {
             if (_reactType == EcsReactiveType.OnRemoved) {
                 if (ReactedEntities.Length == ReactedEntitiesCount) {
                     Array.Resize (ref ReactedEntities, ReactedEntitiesCount << 1);
@@ -61,7 +61,7 @@ namespace Leopotam.Ecs.Reactive {
         /// <summary>
         /// Returns EcsFilterReactive instance for watching on it.
         /// </summary>
-        protected abstract IEcsFilterReactive GetFilter ();
+        protected abstract EcsFilter GetFilter ();
 
         /// <summary>
         /// Returns reactive type behaviour.
@@ -80,15 +80,15 @@ namespace Leopotam.Ecs.Reactive {
     /// </summary>
     /// <typeparam name="Inc1">Component type.</typeparam>
     public abstract class EcsReactiveSystem<Inc1> : EcsReactiveSystemBase where Inc1 : class, new () {
-        protected EcsFilterReactive<Inc1> _reactiveFilter = null;
+        protected EcsFilter<Inc1> _reactiveFilter = null;
 
         public EcsReactiveSystem () { }
 
         public EcsReactiveSystem (EcsWorld world) {
-            _reactiveFilter = world.GetFilter<EcsFilterReactive<Inc1>> ();
+            _reactiveFilter = world.GetFilter<EcsFilter<Inc1>> ();
         }
 
-        sealed protected override IEcsFilterReactive GetFilter () {
+        sealed protected override EcsFilter GetFilter () {
             return _reactiveFilter;
         }
     }
@@ -99,15 +99,15 @@ namespace Leopotam.Ecs.Reactive {
     /// <typeparam name="Inc1">First component type.</typeparam>
     /// <typeparam name="Inc2">Second component type.</typeparam>
     public abstract class EcsReactiveSystem<Inc1, Inc2> : EcsReactiveSystemBase where Inc1 : class, new () where Inc2 : class, new () {
-        protected EcsFilterReactive<Inc1, Inc2> _reactiveFilter = null;
+        protected EcsFilter<Inc1, Inc2> _reactiveFilter = null;
 
         public EcsReactiveSystem () { }
 
         public EcsReactiveSystem (EcsWorld world) {
-            _reactiveFilter = world.GetFilter<EcsFilterReactive<Inc1, Inc2>> ();
+            _reactiveFilter = world.GetFilter<EcsFilter<Inc1, Inc2>> ();
         }
 
-        sealed protected override IEcsFilterReactive GetFilter () {
+        sealed protected override EcsFilter GetFilter () {
             return _reactiveFilter;
         }
     }
@@ -131,16 +131,16 @@ namespace Leopotam.Ecs.Reactive {
         /// <summary>
         /// Internal filter for custom reaction on entities.
         /// </summary>
-        protected EcsFilterReactive<EcsUpdateReactiveFlag<Inc1>> _reactiveFilter = null;
+        protected EcsFilter<EcsUpdateReactiveFlag<Inc1>> _reactiveFilter = null;
 
         public EcsUpdateReactiveSystem () { }
 
         public EcsUpdateReactiveSystem (EcsWorld world) {
             _world = world;
-            _reactiveFilter = _world.GetFilter<EcsFilterReactive<EcsUpdateReactiveFlag<Inc1>>> ();
+            _reactiveFilter = _world.GetFilter<EcsFilter<EcsUpdateReactiveFlag<Inc1>>> ();
         }
 
-        sealed protected override IEcsFilterReactive GetFilter () {
+        sealed protected override EcsFilter GetFilter () {
             return _reactiveFilter;
         }
 
