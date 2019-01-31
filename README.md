@@ -140,10 +140,10 @@ sealed class TestRunSystem : IEcsInitSystem, IEcsRunSystem {
     void IEcsInitSystem.Destroy () { }
 
     void IEcsRunSystem.Run () {
-        for (var i = 0; i < _filter.EntitiesCount; i++) {
-            _filter.Components1[i].Id++;
+        foreach (var idx in _filter) {
+            _filter.Components1[idx].Id++;
             // Important! This method should be called for each component for processing at EcsUpdateReactiveSystem.
-            _world.MarkComponentAsUpdated<UpdateComponent1> (_filter.Entities[i]);
+            _world.MarkComponentAsUpdated<UpdateComponent1> (_filter.Entities[idx]);
         }
     }
 }
@@ -152,8 +152,7 @@ sealed class TestRunSystem : IEcsInitSystem, IEcsRunSystem {
 sealed class TestReactiveSystemOnUpdate : EcsUpdateReactiveSystem<UpdateComponent1> {
     // this method will be called only if there are any entities for processing.
     protected override void RunUpdateReactive () {
-        for (var i = 0; i < ReactedEntitiesCount; i++) {
-            var entity = ReactedEntities[i];
+        foreach (var entity in this) {
             var c = _world.GetComponent<UpdateComponent1> (entity);
             Debug.LogFormat ("[ON-UPDATE] Updated entity: {0}, new value: {1}", entity, c.Id);
         }
