@@ -5,6 +5,7 @@
 // ----------------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 
 namespace Leopotam.Ecs.Reactive {
     /// <summary>
@@ -19,8 +20,15 @@ namespace Leopotam.Ecs.Reactive {
     /// Base class for all reactive systems.
     /// </summary>
     public abstract class EcsReactiveSystemBase : IEcsFilterListener, IEcsPreInitSystem, IEcsRunSystem {
-        public int[] ReactedEntities = new int[32];
-        public int ReactedEntitiesCount;
+        [Obsolete ("Use foreach (var entity in this) {} loop instead. Take care - returned value is EntityId, not index")]
+        public int[] ReactedEntities { get { return _reactedEntities; } }
+
+        [Obsolete ("Use foreach (var entity in this) {} loop instead. Take care - returned value is EntityId, not index")]
+        public int ReactedEntitiesCount { get { return _reactedEntitiesCount; } }
+
+        int[] _reactedEntities = new int[32];
+        int _reactedEntitiesCount;
+
         EcsReactiveType _reactType;
 
         void IEcsPreInitSystem.PreInitialize () {
@@ -29,32 +37,32 @@ namespace Leopotam.Ecs.Reactive {
         }
 
         void IEcsPreInitSystem.PreDestroy () {
-            ReactedEntitiesCount = 0;
+            _reactedEntitiesCount = 0;
             GetFilter ().RemoveListener (this);
         }
 
         void IEcsRunSystem.Run () {
-            if (ReactedEntitiesCount > 0) {
+            if (_reactedEntitiesCount > 0) {
                 RunReactive ();
+                _reactedEntitiesCount = 0;
             }
-            ReactedEntitiesCount = 0;
         }
 
         void IEcsFilterListener.OnEntityAdded (int entity) {
             if (_reactType == EcsReactiveType.OnAdded) {
-                if (ReactedEntities.Length == ReactedEntitiesCount) {
-                    Array.Resize (ref ReactedEntities, ReactedEntitiesCount << 1);
+                if (_reactedEntities.Length == _reactedEntitiesCount) {
+                    Array.Resize (ref _reactedEntities, _reactedEntitiesCount << 1);
                 }
-                ReactedEntities[ReactedEntitiesCount++] = entity;
+                _reactedEntities[_reactedEntitiesCount++] = entity;
             }
         }
 
         void IEcsFilterListener.OnEntityRemoved (int entity) {
             if (_reactType == EcsReactiveType.OnRemoved) {
-                if (ReactedEntities.Length == ReactedEntitiesCount) {
-                    Array.Resize (ref ReactedEntities, ReactedEntitiesCount << 1);
+                if (_reactedEntities.Length == _reactedEntitiesCount) {
+                    Array.Resize (ref _reactedEntities, _reactedEntitiesCount << 1);
                 }
-                ReactedEntities[ReactedEntitiesCount++] = entity;
+                _reactedEntities[_reactedEntitiesCount++] = entity;
             }
         }
 
@@ -73,6 +81,56 @@ namespace Leopotam.Ecs.Reactive {
         /// Will be called only if any entities presents for processing.
         /// </summary>
         protected abstract void RunReactive ();
+
+#if NET_4_6 || NET_STANDARD_2_0
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+        public Enumerator GetEnumerator () {
+            return new Enumerator (_reactedEntities, _reactedEntitiesCount);
+        }
+
+        public struct Enumerator : IEnumerator<int> {
+            readonly int[] _entities;
+            readonly int _count;
+            int _idx;
+
+#if NET_4_6 || NET_STANDARD_2_0
+            [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+            internal Enumerator (int[] entities, int entitiesCount) {
+                _entities = entities;
+                _count = entitiesCount;
+                _idx = -1;
+            }
+
+            public int Current {
+#if NET_4_6 || NET_STANDARD_2_0
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+                get { return _entities[_idx]; }
+            }
+
+            object System.Collections.IEnumerator.Current { get { return null; } }
+
+#if NET_4_6 || NET_STANDARD_2_0
+            [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+            public void Dispose () { }
+
+#if NET_4_6 || NET_STANDARD_2_0
+            [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+            public bool MoveNext () {
+                return ++_idx < _count;
+            }
+
+#if NET_4_6 || NET_STANDARD_2_0
+            [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+#endif
+            public void Reset () {
+                _idx = -1;
+            }
+        }
     }
 
     /// <summary>
