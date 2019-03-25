@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Leopotam.Ecs.Reactive {
     /// <summary>
@@ -20,15 +21,8 @@ namespace Leopotam.Ecs.Reactive {
     /// Base class for all reactive systems.
     /// </summary>
     public abstract class EcsReactiveSystemBase : IEcsFilterListener, IEcsPreInitSystem, IEcsRunSystem {
-        [Obsolete ("Use foreach (var entity in this) {} loop instead. Take care - returned value is EntityId, not index")]
-        public int[] ReactedEntities { get { return _reactedEntities; } }
-
-        [Obsolete ("Use foreach (var entity in this) {} loop instead. Take care - returned value is EntityId, not index")]
-        public int ReactedEntitiesCount { get { return _reactedEntitiesCount; } }
-
-        int[] _reactedEntities = new int[32];
+        EcsEntity[] _reactedEntities = new EcsEntity[32];
         int _reactedEntitiesCount;
-
         EcsReactiveType _reactType;
 
         void IEcsPreInitSystem.PreInitialize () {
@@ -48,7 +42,7 @@ namespace Leopotam.Ecs.Reactive {
             }
         }
 
-        void IEcsFilterListener.OnEntityAdded (int entity) {
+        void IEcsFilterListener.OnEntityAdded (in EcsEntity entity) {
             if (_reactType == EcsReactiveType.OnAdded) {
                 if (_reactedEntities.Length == _reactedEntitiesCount) {
                     Array.Resize (ref _reactedEntities, _reactedEntitiesCount << 1);
@@ -57,7 +51,7 @@ namespace Leopotam.Ecs.Reactive {
             }
         }
 
-        void IEcsFilterListener.OnEntityRemoved (int entity) {
+        void IEcsFilterListener.OnEntityRemoved (in EcsEntity entity) {
             if (_reactType == EcsReactiveType.OnRemoved) {
                 if (_reactedEntities.Length == _reactedEntitiesCount) {
                     Array.Resize (ref _reactedEntities, _reactedEntitiesCount << 1);
@@ -82,51 +76,39 @@ namespace Leopotam.Ecs.Reactive {
         /// </summary>
         protected abstract void RunReactive ();
 
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator () {
             return new Enumerator (_reactedEntities, _reactedEntitiesCount);
         }
 
-        public struct Enumerator : IEnumerator<int> {
-            readonly int[] _entities;
+        public struct Enumerator : IEnumerator<EcsEntity> {
+            readonly EcsEntity[] _entities;
             readonly int _count;
             int _idx;
 
-#if NET_4_6 || NET_STANDARD_2_0
-            [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-            internal Enumerator (int[] entities, int entitiesCount) {
+            [MethodImpl (MethodImplOptions.AggressiveInlining)]
+            internal Enumerator (EcsEntity[] entities, int entitiesCount) {
                 _entities = entities;
                 _count = entitiesCount;
                 _idx = -1;
             }
 
-            public int Current {
-#if NET_4_6 || NET_STANDARD_2_0
-                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
+            public EcsEntity Current {
+                [MethodImpl (MethodImplOptions.AggressiveInlining)]
                 get { return _entities[_idx]; }
             }
 
             object System.Collections.IEnumerator.Current { get { return null; } }
 
-#if NET_4_6 || NET_STANDARD_2_0
-            [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
+            [MethodImpl (MethodImplOptions.AggressiveInlining)]
             public void Dispose () { }
 
-#if NET_4_6 || NET_STANDARD_2_0
-            [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
+            [MethodImpl (MethodImplOptions.AggressiveInlining)]
             public bool MoveNext () {
                 return ++_idx < _count;
             }
 
-#if NET_4_6 || NET_STANDARD_2_0
-            [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
+            [MethodImpl (MethodImplOptions.AggressiveInlining)]
             public void Reset () {
                 _idx = -1;
             }
@@ -207,8 +189,8 @@ namespace Leopotam.Ecs.Reactive {
         }
 
         sealed protected override void RunReactive () {
-            foreach (var i in _reactiveFilter) {
-                _world.RemoveComponent<EcsUpdateReactiveFlag<Inc1>> (_reactiveFilter.Entities[i]);
+            foreach (var idx in _reactiveFilter) {
+                _world.RemoveComponent<EcsUpdateReactiveFlag<Inc1>> (_reactiveFilter.Entities[idx]);
             }
             RunUpdateReactive ();
         }
