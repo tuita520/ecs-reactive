@@ -10,13 +10,9 @@ namespace Leopotam.Ecs {
         /// Marks component on entity as updated for processing later at reactive system.
         /// </summary>
         /// <typeparam name="T">Component type.</typeparam>
-        public static void MarkComponentAsUpdated<T> (this EcsWorld world, int entity) where T : class, new () {
+        public static void MarkComponentAsUpdated<T> (this EcsWorld world, in EcsEntity entity) where T : class, new () {
             bool isNew;
             world.EnsureComponent<Reactive.EcsUpdateReactiveFlag<T>> (entity, out isNew);
         }
     }
 }
-
-#if !NET_4_6 && !NET_STANDARD_2_0
-#warning [Leopotam.Ecs.Reactive] .Net Framework v3.5 support deprecated and will be removed in next release.
-#endif
