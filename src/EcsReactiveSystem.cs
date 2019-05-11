@@ -5,7 +5,6 @@
 // ----------------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Leopotam.Ecs.Reactive {
@@ -81,7 +80,7 @@ namespace Leopotam.Ecs.Reactive {
             return new Enumerator (_reactedEntities, _reactedEntitiesCount);
         }
 
-        public struct Enumerator : IEnumerator<EcsEntity> {
+        public struct Enumerator {
             readonly EcsEntity[] _entities;
             readonly int _count;
             int _idx;
@@ -93,12 +92,10 @@ namespace Leopotam.Ecs.Reactive {
                 _idx = -1;
             }
 
-            public EcsEntity Current {
+            public ref EcsEntity Current {
                 [MethodImpl (MethodImplOptions.AggressiveInlining)]
-                get { return _entities[_idx]; }
+                get { return ref _entities[_idx]; }
             }
-
-            object System.Collections.IEnumerator.Current { get { return null; } }
 
             [MethodImpl (MethodImplOptions.AggressiveInlining)]
             public void Dispose () { }
@@ -106,11 +103,6 @@ namespace Leopotam.Ecs.Reactive {
             [MethodImpl (MethodImplOptions.AggressiveInlining)]
             public bool MoveNext () {
                 return ++_idx < _count;
-            }
-
-            [MethodImpl (MethodImplOptions.AggressiveInlining)]
-            public void Reset () {
-                _idx = -1;
             }
         }
     }
