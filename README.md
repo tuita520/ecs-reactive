@@ -7,9 +7,24 @@ Reactive filters / systems for using with [Entity Component System Framework](ht
 
 > Tested on unity 2018.3 (not dependent on it) and contains assembly definition for compiling to separate assembly file for performance reason.
 
-> **Its early work-in-progress stage, not recommended to use in real projects, any api / behaviour can change later.**
-
 > **Important!** All reacted entities are just cached results: real entities / components already can be removed from world / component! If you know that you use similar behaviour (entity can be removed before reactive system starts to work) - `EcsWorld.IsEntityExists` method should be used at reactive system processing per each entity. But better to not remove entities before reactive systems.
+
+# Installation
+
+## As unity module
+This repository can be installed as unity module directly from git url. In this way new line should be added to `Packages/manifest.json`:
+```
+"com.leopotam.ecs-reactive": "https://github.com/Leopotam/ecs-reactive.git",
+```
+By default last released version will be used. If you need trunk / developing version then `develop` name of branch should be added after hash:
+```
+"com.leopotam.ecs-reactive": "https://github.com/Leopotam/ecs-reactive.git#develop",
+```
+
+## As source
+If you can't / don't want to use unity modules, code can be downloaded as sources archive of required release from [Releases page](`https://github.com/Leopotam/ecs-reactive/releases`).
+
+# Examples
 
 ## OnAdd / OnRemove example:
 ```csharp
