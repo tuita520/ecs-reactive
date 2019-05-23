@@ -3,11 +3,28 @@
 # Reactive behaviour for LeoECS
 Reactive filters / systems for using with [Entity Component System Framework](https://github.com/Leopotam/ecs).
 
+> C#7.3 or above required for this framework.
+
 > Tested on unity 2018.3 (not dependent on it) and contains assembly definition for compiling to separate assembly file for performance reason.
 
-> **Its early work-in-progress stage, not recommended to use in real projects, any api / behaviour can change later.**
-
 > **Important!** All reacted entities are just cached results: real entities / components already can be removed from world / component! If you know that you use similar behaviour (entity can be removed before reactive system starts to work) - `EcsWorld.IsEntityExists` method should be used at reactive system processing per each entity. But better to not remove entities before reactive systems.
+
+# Installation
+
+## As unity module
+This repository can be installed as unity module directly from git url. In this way new line should be added to `Packages/manifest.json`:
+```
+"com.leopotam.ecs-reactive": "https://github.com/Leopotam/ecs-reactive.git",
+```
+By default last released version will be used. If you need trunk / developing version then `develop` name of branch should be added after hash:
+```
+"com.leopotam.ecs-reactive": "https://github.com/Leopotam/ecs-reactive.git#develop",
+```
+
+## As source
+If you can't / don't want to use unity modules, code can be downloaded as sources archive of required release from [Releases page](`https://github.com/Leopotam/ecs-reactive/releases`).
+
+# Examples
 
 ## OnAdd / OnRemove example:
 ```csharp
@@ -61,7 +78,7 @@ sealed class TestReactiveSystemOnAdd : EcsReactiveSystem<ReactiveComponent1>, IE
     // this method will be called only if there are any entities for processing.
     protected override void RunReactive () {
         // Proper way to iterate over filtered entities collection.
-        foreach (var entity in this) {
+        foreach (ref var entity in this) {
             var c = _world.GetComponent<ReactiveComponent1> (entity);
             Debug.LogFormat ("[ON-ADDED] Reacted entity \"{0}\" and component {1}", entity, c.Id);
 
@@ -80,7 +97,7 @@ sealed class TestReactiveSystemOnRemove : EcsReactiveSystem<ReactiveComponent1> 
 
     // this method will be called only if there are any entities for processing.
     protected override void RunReactive () {
-        foreach (var entity in this) {
+        foreach (ref var entity in this) {
             Debug.LogFormat ("[ON-REMOVE] Reacted entity: {0}", entity);
         }
     }
@@ -152,7 +169,7 @@ sealed class TestRunSystem : IEcsInitSystem, IEcsRunSystem {
 sealed class TestReactiveSystemOnUpdate : EcsUpdateReactiveSystem<UpdateComponent1> {
     // this method will be called only if there are any entities for processing.
     protected override void RunUpdateReactive () {
-        foreach (var entity in this) {
+        foreach (ref var entity in this) {
             var c = _world.GetComponent<UpdateComponent1> (entity);
             Debug.LogFormat ("[ON-UPDATE] Updated entity: {0}, new value: {1}", entity, c.Id);
         }
