@@ -19,17 +19,17 @@ namespace Leopotam.Ecs.Reactive {
     /// <summary>
     /// Base class for all reactive systems.
     /// </summary>
-    public abstract class EcsReactiveSystemBase : IEcsFilterListener, IEcsPreInitSystem, IEcsRunSystem {
+    public abstract class EcsReactiveSystemBase : IEcsFilterListener, IEcsPreInitSystem, IEcsAfterDestroySystem, IEcsRunSystem {
         EcsEntity[] _reactedEntities = new EcsEntity[32];
         int _reactedEntitiesCount;
         EcsReactiveType _reactType;
 
-        void IEcsPreInitSystem.PreInitialize () {
+        void IEcsPreInitSystem.PreInit () {
             _reactType = GetReactiveType ();
             GetFilter ().AddListener (this);
         }
 
-        void IEcsPreInitSystem.PreDestroy () {
+        void IEcsAfterDestroySystem.AfterDestroy () {
             _reactedEntitiesCount = 0;
             GetFilter ().RemoveListener (this);
         }
@@ -108,35 +108,16 @@ namespace Leopotam.Ecs.Reactive {
     }
 
     /// <summary>
-    /// Reactive system with support for one component type.
+    /// Reactive system with support for custom filter.
     /// </summary>
-    /// <typeparam name="Inc1">Component type.</typeparam>
-    public abstract class EcsReactiveSystem<Inc1> : EcsReactiveSystemBase where Inc1 : class, new () {
-        protected EcsFilter<Inc1> _reactiveFilter = null;
+    /// <typeparam name="F">First component type.</typeparam>
+    public abstract class EcsReactiveSystem<F> : EcsReactiveSystemBase where F : EcsFilter {
+        protected F _reactiveFilter = null;
 
         public EcsReactiveSystem () { }
 
         public EcsReactiveSystem (EcsWorld world) {
-            _reactiveFilter = world.GetFilter<EcsFilter<Inc1>> ();
-        }
-
-        sealed protected override EcsFilter GetFilter () {
-            return _reactiveFilter;
-        }
-    }
-
-    /// <summary>
-    /// Reactive system with support for two component types.
-    /// </summary>
-    /// <typeparam name="Inc1">First component type.</typeparam>
-    /// <typeparam name="Inc2">Second component type.</typeparam>
-    public abstract class EcsReactiveSystem<Inc1, Inc2> : EcsReactiveSystemBase where Inc1 : class, new () where Inc2 : class, new () {
-        protected EcsFilter<Inc1, Inc2> _reactiveFilter = null;
-
-        public EcsReactiveSystem () { }
-
-        public EcsReactiveSystem (EcsWorld world) {
-            _reactiveFilter = world.GetFilter<EcsFilter<Inc1, Inc2>> ();
+            _reactiveFilter = (F) world.GetFilter (typeof (F));
         }
 
         sealed protected override EcsFilter GetFilter () {
@@ -148,13 +129,13 @@ namespace Leopotam.Ecs.Reactive {
     /// For internal use only! Special component for mark user components as updated.
     /// </summary>
     /// <typeparam name="T">User component type.</typeparam>
-    public class EcsUpdateReactiveFlag<T> where T : class, new () { }
+    public class EcsUpdateReactiveFlag<T> where T : class { }
 
     /// <summary>
     /// Reactive system for processing updated components (EcsWorld.MarkComponentAsUpdated).
     /// </summary>
     /// <typeparam name="Inc1">Component type.</typeparam>
-    public abstract class EcsUpdateReactiveSystem<Inc1> : EcsReactiveSystemBase where Inc1 : class, new () {
+    public abstract class EcsUpdateReactiveSystem<Inc1> : EcsReactiveSystemBase where Inc1 : class {
         /// <summary>
         /// EcsWorld instance.
         /// </summary>
@@ -169,7 +150,7 @@ namespace Leopotam.Ecs.Reactive {
 
         public EcsUpdateReactiveSystem (EcsWorld world) {
             _world = world;
-            _reactiveFilter = _world.GetFilter<EcsFilter<EcsUpdateReactiveFlag<Inc1>>> ();
+            _reactiveFilter = (EcsFilter<EcsUpdateReactiveFlag<Inc1>>) _world.GetFilter (typeof (EcsFilter<EcsUpdateReactiveFlag<Inc1>>));
         }
 
         sealed protected override EcsFilter GetFilter () {
@@ -182,7 +163,7 @@ namespace Leopotam.Ecs.Reactive {
 
         sealed protected override void RunReactive () {
             foreach (var idx in _reactiveFilter) {
-                _world.RemoveComponent<EcsUpdateReactiveFlag<Inc1>> (_reactiveFilter.Entities[idx]);
+                _reactiveFilter.Entities[idx].Destroy ();
             }
             RunUpdateReactive ();
         }
