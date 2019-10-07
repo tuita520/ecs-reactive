@@ -42,7 +42,7 @@ sealed class TestReactiveStartup : MonoBehaviour {
         _systems
             .Add (new TestReactiveSystemOnAdd ())
             .Add (new TestReactiveSystemOnRemove ())
-            .Initialize ();
+            .Init ();
     }
 
     void Update () {
@@ -50,25 +50,25 @@ sealed class TestReactiveStartup : MonoBehaviour {
     }
 
     void OnDisable () {
-        _systems.Dispose ();
+        _systems.Destroy ();
         _systems = null;
-        _world.Dispose ();
+        _world.Destroy ();
         _world = null;
     }
 }
 
-[EcsInject]
-sealed class TestReactiveSystemOnAdd : EcsReactiveSystem<ReactiveComponent1>, IEcsInitSystem {
+sealed class TestReactiveSystemOnAdd : EcsReactiveSystem<EcsFilter<ReactiveComponent1>>, IEcsInitSystem {
     EcsWorld _world = null;
 
-    void IEcsInitSystem.Initialize () {
+    void IEcsInitSystem.Init () {
         // create test data for catching OnAdded event at react system later.
-        _world.CreateEntityWith<ReactiveComponent1> ().Id = 10;
-        _world.CreateEntityWith<ReactiveComponent1> ().Id = 20;
-        _world.CreateEntityWith<ReactiveComponent1> ().Id = 30;
+        _world.NewEntityWith<ReactiveComponent1> (out var c1);
+        c1.Id = 10;
+        _world.NewEntityWith<ReactiveComponent1> (out var c2);
+        c2.Id = 20;
+        _world.NewEntityWith<ReactiveComponent1> (out var c3);
+        c3.Id = 30;
     }
-
-    void IEcsInitSystem.Destroy () { }
 
     protected override EcsReactiveType GetReactiveType () {
         // this system should react on Add event.
@@ -79,17 +79,16 @@ sealed class TestReactiveSystemOnAdd : EcsReactiveSystem<ReactiveComponent1>, IE
     protected override void RunReactive () {
         // Proper way to iterate over filtered entities collection.
         foreach (ref var entity in this) {
-            var c = _world.GetComponent<ReactiveComponent1> (entity);
+            var c = entity.Get<ReactiveComponent1> ();
             Debug.LogFormat ("[ON-ADDED] Reacted entity \"{0}\" and component {1}", entity, c.Id);
 
             // remove reacted entities for test OnRemoved reactive system.
-            _world.RemoveEntity (entity);
+            entity.Destroy();
         }
     }
 }
 
-[EcsInject]
-sealed class TestReactiveSystemOnRemove : EcsReactiveSystem<ReactiveComponent1> {
+sealed class TestReactiveSystemOnRemove : EcsReactiveSystem<EcsFilter<ReactiveComponent1>> {
     protected override EcsReactiveType GetReactiveType () {
         // this system should react on Remove event.
         return EcsReactiveType.OnRemoved;
@@ -130,7 +129,7 @@ sealed class TestUpdateReactiveStartup : MonoBehaviour {
         _systems
             .Add (new TestRunSystem ())
             .Add (new TestReactiveSystemOnUpdate ())
-            .Initialize ();
+            .Init ();
     }
 
     void Update () {
@@ -138,9 +137,9 @@ sealed class TestUpdateReactiveStartup : MonoBehaviour {
     }
 
     void OnDisable () {
-        _systems.Dispose ();
+        _systems.Destroy ();
         _systems = null;
-        _world.Dispose ();
+        _world.Destroy ();
         _world = null;
     }
 }
@@ -150,27 +149,25 @@ sealed class TestRunSystem : IEcsInitSystem, IEcsRunSystem {
     EcsWorld _world = null;
     EcsFilter<UpdateComponent1> _filter = null;
 
-    void IEcsInitSystem.Initialize () {
+    void IEcsInitSystem.Init () {
         _world.CreateEntityWith<UpdateComponent1> ().Id = 10;
     }
-
-    void IEcsInitSystem.Destroy () { }
 
     void IEcsRunSystem.Run () {
         foreach (var idx in _filter) {
             _filter.Components1[idx].Id++;
             // Important! This method should be called for each component for processing at EcsUpdateReactiveSystem.
-            _world.MarkComponentAsUpdated<UpdateComponent1> (_filter.Entities[idx]);
+            _filter.Entities[idx].MarkAsUpdated<UpdateComponent1> ();
         }
     }
 }
 
 [EcsInject]
-sealed class TestReactiveSystemOnUpdate : EcsUpdateReactiveSystem<UpdateComponent1> {
+sealed class TestReactiveSystemOnUpdate : EcsUpdateReactiveSystem<EcsFilter<UpdateComponent1>> {
     // this method will be called only if there are any entities for processing.
     protected override void RunUpdateReactive () {
         foreach (ref var entity in this) {
-            var c = _world.GetComponent<UpdateComponent1> (entity);
+            var c = entity.Get<UpdateComponent1> ();
             Debug.LogFormat ("[ON-UPDATE] Updated entity: {0}, new value: {1}", entity, c.Id);
         }
     }
